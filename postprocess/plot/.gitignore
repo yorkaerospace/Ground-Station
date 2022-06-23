@@ -1,0 +1,5 @@
+*.cache
+*.osm
+*.csv
+*.txt
+*backup*
