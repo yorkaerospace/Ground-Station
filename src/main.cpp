@@ -33,9 +33,9 @@ void onReceive(int packetSize) {
   // Serial.print(data->bmp_temp);
 
   Serial.print("Lat:");
-  Serial.print(data->gps_lat);
+  Serial.print(data->gps_lat, 10);
   Serial.print(" Lng:");
-  Serial.print(data->gps_lng);
+  Serial.print(data->gps_lng, 10);
   Serial.print(" Alt:");
   Serial.print(data->gps_alt);
   Serial.print(" Sat:");
@@ -80,7 +80,7 @@ void setup() {
   // between 1 - 6 are supported
   // LoRa.setGain(6);
   // // Sync word to avoid confusing other transceivers
-  // LoRa.setSyncWord(0xD3);
+  // LoRa.setSyncWord(0x03);
   // // Set a relatively wide 250kHz bandwidth
   // LoRa.setSignalBandwidth(250E3);
 
