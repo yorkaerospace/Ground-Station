@@ -2,10 +2,10 @@
 #include <SPI.h>
 #include <sys/types.h>
 
-#define ss 5
+#define ss 12
 #define rst 14
-#define dio0 2
-#define LED 12
+#define dio0 27
+#define LED 25
 
 struct Packet {
   uint32_t seq_no;
@@ -20,6 +20,7 @@ Packet *data;
 
 void onReceive(int packetSize) {
   // read packet
+    Serial.println("Yo packet");
   for (int i = 0; i < packetSize; i++) {
     recv[i] = LoRa.read();
   }
@@ -49,7 +50,7 @@ void onReceive(int packetSize) {
   Serial.print(data->bmp_prs);
   Serial.print(" Alt:");
   Serial.println(data->bmp_alt);
-  
+
 
   // print RSSI of packet
   Serial.print("RSSI: ");
@@ -61,8 +62,10 @@ void onReceive(int packetSize) {
 
 void setup() {
   Serial.begin(115200);
+
   while (!Serial)
     ;
+
 
   Serial.println("LoRa Receiver Callback");
   Serial.println(sizeof(Packet));
@@ -86,13 +89,19 @@ void setup() {
 
   Serial.println("LoRa Initializing OK!");
 
-  // register the receive callback
-  LoRa.onReceive(onReceive);
-
   // put the radio into receive mode
   LoRa.receive();
 }
 
+bool toggle = true;
+
 void loop() {
   // do nothing
+    toggle = !toggle;
+    digitalWrite(LED,toggle);
+    int packetSize = LoRa.parsePacket();
+    if (packetSize) {
+        onReceive(packetSize);
+    }
+    delay(500);
 }
