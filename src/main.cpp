@@ -7,25 +7,33 @@
 #define dio0 27
 #define LED 25
 
-struct Packet {
-  uint32_t seq_no;
-  uint32_t time_ms;
-  double gps_lat, gps_lng, gps_alt;
-  uint32_t gps_sat, gps_tme;
-  double bmp_tmp, bmp_prs, bmp_alt;
-};
+#pragma pack(1)
+struct packet {
+    // Packet information
+    uint32_t seq_no;
+    uint32_t time_ms;     // ms since boot
+    uint64_t vid;         // Vehicle ID
 
-unsigned char *recv = (unsigned char *)malloc(sizeof(Packet));
-Packet *data;
+    // GPS data
+    uint8_t  time_utc[3]; // Seconds since midnight
+    int32_t  lat, lng;    // Position
+    uint8_t  sat;         // Satellites
+
+    // Baro data
+    uint32_t pres;        // Pascals
+    int16_t  temp;        // centidegrees
+};
+#pragma pack()
+
+unsigned char *recv = (unsigned char *)malloc(sizeof(struct packet));
+packet *data;
 
 void onReceive(int packetSize) {
-  // read packet
-    Serial.println("Yo packet");
   for (int i = 0; i < packetSize; i++) {
     recv[i] = LoRa.read();
   }
 
-  data = (Packet *)recv;
+  data = (packet *)recv;
 
   // Serial.print(data->seq_no);
   // Serial.print(" | Altitude:");
@@ -33,31 +41,26 @@ void onReceive(int packetSize) {
   // Serial.print(" Temp:");
   // Serial.print(data->bmp_temp);
 
-  Serial.print("Lat:");
-  Serial.print(data->gps_lat, 10);
-  Serial.print(" Lng:");
-  Serial.print(data->gps_lng, 10);
-  Serial.print(" Alt:");
-  Serial.print(data->gps_alt);
-  Serial.print(" Sat:");
-  Serial.print(data->gps_sat);
-  Serial.print(" Tme:");
-  Serial.println(data->gps_tme);
+  Serial.print(" Lat: ");
+  Serial.print(data->lat);
+  Serial.print(" Lng: ");
+  Serial.print(data->lng );
+  Serial.print(" Sat: ");
+  Serial.print(data->sat);
+  Serial.print(" Tme: ");
+  Serial.print(data->time_utc[0]);
+  Serial.print(":");
+  Serial.print(data->time_utc[1]);
+  Serial.print(":");
+  Serial.print(data->time_utc[2]);
 
-  Serial.print("Tmp:");
-  Serial.print(data->bmp_tmp);
-  Serial.print(" Prs:");
-  Serial.print(data->bmp_prs);
-  Serial.print(" Alt:");
-  Serial.println(data->bmp_alt);
+  Serial.print(" Tmp: ");
+  Serial.print(data->temp);
+  Serial.print(" Prs: ");
+  Serial.print(data->pres);
 
-
-  // print RSSI of packet
-  Serial.print("RSSI: ");
-  Serial.print(LoRa.packetRssi());
   Serial.print(" SNR: ");
   Serial.println(LoRa.packetSnr());
-  Serial.println();
 }
 
 void setup() {
@@ -68,7 +71,7 @@ void setup() {
 
 
   Serial.println("LoRa Receiver Callback");
-  Serial.println(sizeof(Packet));
+  Serial.println(sizeof(packet));
 
   // setup LoRa transceiver module
   LoRa.setPins(ss, rst, dio0);
@@ -85,7 +88,8 @@ void setup() {
   // // Sync word to avoid confusing other transceivers
   // LoRa.setSyncWord(0x03);
   // // Set a relatively wide 250kHz bandwidth
-  // LoRa.setSignalBandwidth(250E3);
+  LoRa.setSignalBandwidth(250E3);
+  LoRa.setSpreadingFactor(12);
 
   Serial.println("LoRa Initializing OK!");
 
@@ -96,7 +100,6 @@ void setup() {
 bool toggle = true;
 
 void loop() {
-  // do nothing
     toggle = !toggle;
     digitalWrite(LED,toggle);
     int packetSize = LoRa.parsePacket();
