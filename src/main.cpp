@@ -11,7 +11,7 @@
 struct packet {
     // Packet information
     uint32_t seq_no;
-    uint64_t vid;         // Vehicle ID
+    uint8_t vid;         // Vehicle ID
 
     // Status
     char     state;       // Current state
@@ -46,6 +46,8 @@ void onReceive(int packetSize) {
   // vehicle ID, state, internal clock, lat, lng, sats, GPS time, temp, pres, SNR
 
   Serial.print(data->vid);
+  Serial.print(", ");
+  Serial.print(data->seq_no);
   Serial.print(", ");
   Serial.print(data->state);
   Serial.print(", ");
@@ -98,7 +100,8 @@ void setup() {
   // LoRa.setSyncWord(0x03);
   // // Set a relatively wide 250kHz bandwidth
   LoRa.setSignalBandwidth(250E3);
-  LoRa.setSpreadingFactor(12);
+  LoRa.setSpreadingFactor(9);
+  LoRa.setCodingRate4(8);
 
   Serial.println("LoRa Initializing OK!");
 
@@ -115,5 +118,5 @@ void loop() {
     if (packetSize) {
         onReceive(packetSize);
     }
-    delay(500);
+    delay(50);
 }
