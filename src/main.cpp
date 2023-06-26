@@ -27,11 +27,15 @@ struct packet {
     int16_t  temp;        // centidegrees
 };
 #pragma pack()
-unsigned char *recv = (unsigned char *)malloc(sizeof(struct packet));
+unsigned char recv[sizeof(struct packet)];
 packet *data;
 
 void onReceive(int packetSize) {
-  for (int i = 0; i < packetSize; i++) {
+
+  int toRead = packetSize >= sizeof(struct packet)
+             ? sizeof(struct packet) : packetSize;
+
+  for (int i = 0; i < toRead; i++) {
     recv[i] = LoRa.read();
   }
 
@@ -115,6 +119,7 @@ void loop() {
     toggle = !toggle;
     digitalWrite(LED,toggle);
     int packetSize = LoRa.parsePacket();
+    Serial.println(packetSize);
     if (packetSize) {
         onReceive(packetSize);
     }
