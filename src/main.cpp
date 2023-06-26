@@ -86,7 +86,7 @@ void setup() {
   // between 1 - 6 are supported
   // LoRa.setGain(6);
   // // Sync word to avoid confusing other transceivers
-  // LoRa.setSyncWord(0x03);
+  LoRa.setSyncWord(0x89);
   // // Set a relatively wide 250kHz bandwidth
   LoRa.setSignalBandwidth(250E3);
   LoRa.setSpreadingFactor(12);
