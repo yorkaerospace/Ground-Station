@@ -18,15 +18,20 @@ struct packet {
     uint32_t time_ms;     // ms since boot
 
     // GPS data
-    uint8_t  time_utc[3]; // Seconds since midnight
+    uint8_t  time_utc[3]; // hrs, mins, sec
     int32_t  lat, lng;    // Position
     uint8_t  sat;         // Satellites
 
     // Baro data
     uint32_t pres;        // Pascals
     int16_t  temp;        // centidegrees
+
+    // IMU data
+    int16_t  accl[3];     // Arbitrary units
+    int16_t  gyro[3];     // Arbitrary units
 };
 #pragma pack()
+
 unsigned char recv[sizeof(struct packet)];
 packet *data;
 
@@ -49,6 +54,7 @@ void onReceive(int packetSize) {
 
   // vehicle ID, state, internal clock, lat, lng, sats, GPS time, temp, pres, SNR
 
+  // Does arduino *really* not provide a printf?!?!?
   Serial.print(data->vid);
   Serial.print(", ");
   Serial.print(data->seq_no);
@@ -75,6 +81,20 @@ void onReceive(int packetSize) {
   Serial.print(data->pres);
 
   Serial.print(", ");
+  Serial.print(data->accl[0]);
+  Serial.print(", ");
+  Serial.print(data->accl[1]);
+  Serial.print(", ");
+  Serial.print(data->accl[2]);
+
+  Serial.print(", ");
+  Serial.print(data->gyro[0]);
+  Serial.print(", ");
+  Serial.print(data->gyro[1]);
+  Serial.print(", ");
+  Serial.print(data->gyro[2]);
+
+  Serial.print(", ");
   Serial.println(LoRa.packetSnr());
 }
 
@@ -83,10 +103,6 @@ void setup() {
 
   while (!Serial)
     ;
-
-
-  Serial.println("LoRa Receiver Callback");
-  Serial.println(sizeof(packet));
 
   // setup LoRa transceiver module
   LoRa.setPins(ss, rst, dio0);
@@ -99,15 +115,12 @@ void setup() {
 
   // Uncomment the next line to disable the default AGC and set LNA gain, values
   // between 1 - 6 are supported
-  // LoRa.setGain(6);
+  //LoRa.setGain(6);
   // // Sync word to avoid confusing other transceivers
   LoRa.setSyncWord(0x89);
   // // Set a relatively wide 250kHz bandwidth
-  LoRa.setSignalBandwidth(250E3);
+  LoRa.setSignalBandwidth(125E3);
   LoRa.setSpreadingFactor(9);
-  LoRa.setCodingRate4(8);
-
-  Serial.println("LoRa Initializing OK!");
 
   // put the radio into receive mode
   LoRa.receive();
@@ -117,10 +130,9 @@ bool toggle = true;
 
 void loop() {
     toggle = !toggle;
-    digitalWrite(LED,toggle);
     int packetSize = LoRa.parsePacket();
-    Serial.println(packetSize);
     if (packetSize) {
+        digitalWrite(LED,toggle);
         onReceive(packetSize);
     }
     delay(50);
