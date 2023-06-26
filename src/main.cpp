@@ -2,17 +2,20 @@
 #include <SPI.h>
 #include <sys/types.h>
 
-#define ss 12
-#define rst 14
-#define dio0 27
+#define ss 17
+#define rst 15
+#define dio0 20
 #define LED 25
 
 #pragma pack(1)
 struct packet {
     // Packet information
     uint32_t seq_no;
+    uint8_t vid;         // Vehicle ID
+
+    // Status
+    char     state;       // Current state
     uint32_t time_ms;     // ms since boot
-    uint64_t vid;         // Vehicle ID
 
     // GPS data
     uint8_t  time_utc[3]; // Seconds since midnight
@@ -24,7 +27,6 @@ struct packet {
     int16_t  temp;        // centidegrees
 };
 #pragma pack()
-
 unsigned char *recv = (unsigned char *)malloc(sizeof(struct packet));
 packet *data;
 
@@ -41,25 +43,34 @@ void onReceive(int packetSize) {
   // Serial.print(" Temp:");
   // Serial.print(data->bmp_temp);
 
-  Serial.print(" Lat: ");
+  // vehicle ID, state, internal clock, lat, lng, sats, GPS time, temp, pres, SNR
+
+  Serial.print(data->vid);
+  Serial.print(", ");
+  Serial.print(data->seq_no);
+  Serial.print(", ");
+  Serial.print(data->state);
+  Serial.print(", ");
+  Serial.print(data->time_ms);
+  Serial.print(", ");
   Serial.print(data->lat);
-  Serial.print(" Lng: ");
-  Serial.print(data->lng );
-  Serial.print(" Sat: ");
+  Serial.print(", ");
+  Serial.print(data->lng);
+  Serial.print(", ");
   Serial.print(data->sat);
-  Serial.print(" Tme: ");
+  Serial.print(", ");
   Serial.print(data->time_utc[0]);
   Serial.print(":");
   Serial.print(data->time_utc[1]);
   Serial.print(":");
   Serial.print(data->time_utc[2]);
 
-  Serial.print(" Tmp: ");
+  Serial.print(", ");
   Serial.print(data->temp);
-  Serial.print(" Prs: ");
+  Serial.print(", ");
   Serial.print(data->pres);
 
-  Serial.print(" SNR: ");
+  Serial.print(", ");
   Serial.println(LoRa.packetSnr());
 }
 
@@ -89,7 +100,8 @@ void setup() {
   LoRa.setSyncWord(0x89);
   // // Set a relatively wide 250kHz bandwidth
   LoRa.setSignalBandwidth(250E3);
-  LoRa.setSpreadingFactor(12);
+  LoRa.setSpreadingFactor(9);
+  LoRa.setCodingRate4(8);
 
   Serial.println("LoRa Initializing OK!");
 
@@ -106,5 +118,5 @@ void loop() {
     if (packetSize) {
         onReceive(packetSize);
     }
-    delay(500);
+    delay(50);
 }
